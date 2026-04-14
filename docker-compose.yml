@@ -1,0 +1,26 @@
+services:
+  # The Database
+  db:
+    image: postgres:15
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: lyntra_db
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: your_secure_password
+    volumes:
+      - ./postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql # Auto-loads your schema
+
+  # The API Layer (Replaces the Supabase Client's backend)
+  server:
+    image: postgrest/postgrest
+    ports:
+      - "3000:3000"
+    environment:
+      PGRST_DB_URI: postgres://admin:your_secure_password@db:5432/lyntra_db
+      PGRST_DB_SCHEMA: public
+      PGRST_DB_ANON_ROLE: web_user # We define this in init.sql
+      PGRST_OPENAPI_MODE: follow-privileges
+    depends_on:
+      - db
